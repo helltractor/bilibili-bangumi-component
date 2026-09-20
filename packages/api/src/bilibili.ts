@@ -24,7 +24,7 @@ export async function handler(query: BilibiliQuery, env?: NodeJS.ProcessEnv) {
   const res = await fetch(`https://api.bilibili.com/x/space/bangumi/follow/list?${searchParams}`)
   const data = await res.json()
 
-  if (!res.ok) {
+  if (!res.ok || data?.code !== 0) {
     return generateRes({
       code: 502,
       message: data.message,
@@ -66,10 +66,19 @@ function handleFetchData(data: any): ResponseData {
         value: item?.stat?.danmaku && numberToZh(item.stat.danmaku),
       },
     ]
+
+    let cover = item.cover as string
+
+    if (cover && cover.startsWith('http:')) {
+      const url = new URL(cover)
+      url.protocol = 'https:'
+      cover = url.toString()
+    }
+
     return {
       nameCN: item.title,
       summary: item.summary,
-      cover: item.cover,
+      cover,
       url: item.url,
       labels: labels.filter(item => item.label),
     }
